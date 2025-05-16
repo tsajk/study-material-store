@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
-import axios from 'axios';
-import Head from 'next/head';
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
+import Head from 'next/head'
 
 const products = {
   'master-the-ncert-bio-12th': {
@@ -16,31 +15,25 @@ const products = {
     name: 'Disha 144 JEE Mains Physics',
     telegramLink: 'https://t.me/Material_eduhubkmrbot?start=disha-144-jee-mains-physics'
   }
-};
+}
 
 export default function PaymentSuccess() {
-  const router = useRouter();
-  const { product_id, order_id } = router.query;
-  const [isVerified, setIsVerified] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter()
+  const { product_id, order_id } = router.query
+  const [isVerified, setIsVerified] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    if (!order_id || !product_id) return;
+    if (!order_id || !product_id) return
 
-    const verifyPayment = async () => {
-      try {
-        // In a real app, you would verify the payment with your backend
-        // For this example, we'll simulate verification
-        setIsVerified(true);
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Payment verification failed:', error);
-        setIsLoading(false);
-      }
-    };
+    // Simulate verification
+    const timer = setTimeout(() => {
+      setIsVerified(true)
+      setIsLoading(false)
+    }, 2000)
 
-    verifyPayment();
-  }, [order_id, product_id]);
+    return () => clearTimeout(timer)
+  }, [order_id, product_id])
 
   if (isLoading) {
     return (
@@ -53,10 +46,10 @@ export default function PaymentSuccess() {
           <p>Please wait while we verify your payment...</p>
         </div>
       </div>
-    );
+    )
   }
 
-  if (!isVerified) {
+  if (!isVerified || !products[product_id]) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <Head>
@@ -73,10 +66,10 @@ export default function PaymentSuccess() {
           </button>
         </div>
       </div>
-    );
+    )
   }
 
-  const product = products[product_id];
+  const product = products[product_id]
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -106,5 +99,5 @@ export default function PaymentSuccess() {
         </button>
       </div>
     </div>
-  );
+  )
 }
