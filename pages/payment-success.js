@@ -48,4 +48,15 @@ export default function PaymentSuccess() {
         {product_id && products[product_id] ? (
           <>
             <p>Thank you for purchasing {products[product_id].name}.</p>
-            <p>You will be redirected to the
+            <p>You will be redirected to the download page shortly...</p>
+            <p>If you are not redirected automatically, <a href={products[product_id].telegramLink}>click here</a>.</p>
+          </>
+        ) : (
+          <p>Thank you for your purchase!</p>
+        )}
+        
+        <p>Order ID: {order_id}</p>
+      </main>
+    </div>
+  );
+}
