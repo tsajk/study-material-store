@@ -1,4 +1,3 @@
-const crypto = require('crypto');
 const axios = require('axios');
 
 export default async function handler(req, res) {
@@ -15,35 +14,31 @@ export default async function handler(req, res) {
     customerPhone
   } = req.body;
 
-  // Validate input
+  // Validate inputs
   if (!productId || !productName || !amount || !customerName || !customerEmail || !customerPhone) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
-  // Validate required env vars
-  const secretKey = process.env.CASHFREE_SECRET_KEY;
+  // ENV vars
   const appId = process.env.CASHFREE_APP_ID;
+  const secretKey = process.env.CASHFREE_SECRET_KEY;
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
-  if (!secretKey || !appId || !baseUrl) {
-    return res.status(500).json({ message: 'Missing required environment variables' });
+  if (!appId || !secretKey || !baseUrl) {
+    return res.status(500).json({ message: 'Missing environment variables' });
   }
 
   try {
     const orderId = `order_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     const currency = 'INR';
 
-    // Clean customer_id
-    const cleanCustomerId = customerEmail.replace(/[@.]/g, '_');
-
-    // Prepare request data for Cashfree
     const requestData = {
       order_id: orderId,
-      order_amount: amount,
+      order_amount: Number(amount),
       order_currency: currency,
       order_note: productName,
       customer_details: {
-        customer_id: cleanCustomerId,
+        customer_id: customerEmail.replace(/[@.]/g, '_'),
         customer_name: customerName,
         customer_email: customerEmail,
         customer_phone: customerPhone
@@ -53,11 +48,6 @@ export default async function handler(req, res) {
       }
     };
 
-    // Generate signature
-    const message = `${requestData.order_id}|${requestData.order_amount}|${requestData.order_currency}`;
-    const signature = crypto.createHmac('sha256', secretKey).update(message).digest('hex');
-
-    // Make API call to Cashfree
     const response = await axios.post('https://api.cashfree.com/pg/orders', requestData, {
       headers: {
         'Content-Type': 'application/json',
@@ -73,6 +63,7 @@ export default async function handler(req, res) {
         paymentLink: response.data.payment_link
       });
     } else {
+      console.error('Unexpected Cashfree response:', response.data);
       return res.status(500).json({ message: 'Failed to create payment link' });
     }
   } catch (error) {
