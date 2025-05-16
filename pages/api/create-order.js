@@ -3,11 +3,6 @@ import axios from 'axios';
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
 
-  const isProduction = process.env.CASHFREE_ENV === 'production';
-  const baseUrl = isProduction 
-    ? 'https://api.cashfree.com/pg' 
-    : 'https://test.cashfree.com/api/v2/pg';
-
   const {
     productId,
     productName,
@@ -18,30 +13,28 @@ export default async function handler(req, res) {
   } = req.body;
 
   const orderId = `ORDER_${Date.now()}`;
-  const siteUrl = process.env.NEXT_PUBLIC_BASE_URL.replace(/\/$/, '');
-  const returnUrl = `${siteUrl}/payment-success?order_id=${orderId}&product_id=${productId}`;
+  const returnUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success?order_id=${orderId}&product_id=${productId}`;
 
   try {
     const response = await axios.post(
-      `${baseUrl}/orders`, // Correct endpoint
+      'https://api.cashfree.com/pg/orders',
       {
         order_id: orderId,
         order_amount: amount,
         order_currency: 'INR',
         customer_details: {
-          customer_id: customerEmail.replace(/[^a-zA-Z0-9_-]/g, '_'),
+          customer_id: customerEmail,
           customer_name: customerName,
           customer_email: customerEmail,
-          customer_phone: `+91${customerPhone}`.replace(/[+]/g, '') // Ensure proper format
+          customer_phone: customerPhone
         },
         order_meta: {
-          return_url: returnUrl,
-          notify_url: `${siteUrl}/api/payment-webhook`
+          return_url: returnUrl
         }
       },
       {
         headers: {
-          'x-api-version': '2022-09-01', // Confirm this matches Cashfree's docs
+          'x-api-version': '2022-09-01',
           'Content-Type': 'application/json',
           'x-client-id': process.env.CASHFREE_APP_ID,
           'x-client-secret': process.env.CASHFREE_SECRET_KEY
@@ -49,24 +42,9 @@ export default async function handler(req, res) {
       }
     );
 
-    if (response.data.payment_session_id) {
-      const paymentLink = isProduction
-        ? `https://payments.cashfree.com/order/#${response.data.payment_session_id}`
-        : `https://test.cashfree.com/pg/order/#${response.data.payment_session_id}`;
-
-      res.status(200).json({ paymentLink });
-    } else {
-      throw new Error("No payment_session_id received");
-    }
+    res.status(200).json({ paymentLink: response.data.payment_link });
   } catch (error) {
-    console.error("Cashfree API Error:", {
-      error: error.response?.data || error.message,
-      endpointUsed: `${baseUrl}/orders`
-    });
-
-    res.status(500).json({
-      error: "Payment failed",
-      details: error.response?.data || error.message
-    });
+    console.error('Create Order Error:', error.response?.data || error.message);
+    res.status(500).json({ message: 'Failed to create payment order' });
   }
 }
