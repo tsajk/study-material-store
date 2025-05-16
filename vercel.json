@@ -5,9 +5,7 @@
       "src": "package.json",
       "use": "@vercel/next",
       "config": {
-        "nodeVersion": "18.x",
-        "installCommand": "yarn install",
-        "buildCommand": "yarn build"
+        "nodeVersion": "18.x"
       }
     }
   ],
