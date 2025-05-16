@@ -1,4 +1,4 @@
-const cashfree = require("@cashfree/pg");
+const { Cashfree } = require('@cashfree/cashfree-pg');
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -6,9 +6,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    cashfree.XClientId = process.env.CASHFREE_APP_ID;
-    cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY;
-    cashfree.XEnvironment = cashfree.Environment.PRODUCTION;
+    Cashfree.XClientId = process.env.CASHFREE_APP_ID;
+    Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY;
+    Cashfree.XEnvironment = Cashfree.Environment.PRODUCTION;
 
     const { orderId, orderStatus } = req.body;
     if (orderStatus === 'PAID') {
