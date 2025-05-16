@@ -1,7 +1,8 @@
 const { Cashfree } = require('@cashfreepayments/cashfree-sdk');
 
-Cashfree.XClientId = process.env.CASHFREE_APP_ID;
-Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY;
+// Initialize Cashfree once
+Cashfree.XClientId = process.env.CASHFREE_APP_ID || "605266b66d4c81295df88e013e662506";
+Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY || "cfsk_ma_prod_3d5c1e52a60832d47f1eb1af9045d1c2_4b948447";
 Cashfree.XEnvironment = "PRODUCTION";
 
 export default async function handler(req, res) {
