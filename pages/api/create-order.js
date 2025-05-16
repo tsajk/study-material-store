@@ -1,4 +1,4 @@
-const { Cashfree } = require('cashfree-pg-sdk');
+const { Cashfree } = require('@cashfree/cashfree-pg');
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     // Initialize Cashfree
     Cashfree.XClientId = process.env.CASHFREE_APP_ID;
     Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY;
-    Cashfree.XEnvironment = "PRODUCTION";
+    Cashfree.XEnvironment = Cashfree.Environment.PRODUCTION;
 
     const { productId, productName, amount, customerName, customerEmail, customerPhone } = req.body;
     const orderId = `ORDER_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
