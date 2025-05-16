@@ -5,13 +5,15 @@ export default async function handler(req, res) {
 
   console.log('Received Cashfree Webhook:', event);
 
-  // You can verify the signature here if needed and log the payment status.
+  // Optional: Handle actual payment success event
   if (event?.event === 'PAYMENT_SUCCESS') {
     const orderId = event.data.order.order_id;
     const paymentId = event.data.payment.payment_id;
+    const status = event.data.payment.payment_status;
 
-    // TODO: Mark payment as complete, send email, update database, etc.
-    console.log(`Payment success for Order ID: ${orderId}, Payment ID: ${paymentId}`);
+    console.log(`Payment SUCCESS - Order ID: ${orderId}, Payment ID: ${paymentId}, Status: ${status}`);
+
+    // TODO: You could store this in Firebase, Google Sheets, etc.
   }
 
   res.status(200).send('Webhook received');
