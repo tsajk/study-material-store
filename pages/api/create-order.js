@@ -23,7 +23,7 @@ export default async function handler(req, res) {
         order_amount: amount,
         order_currency: 'INR',
         customer_details: {
-          customer_id: customerEmail.replace(/[^a-zA-Z0-9_-]/g, '_'), // Make it alphanumeric
+          customer_id: customerEmail.replace(/[^a-zA-Z0-9_-]/g, '_'),
           customer_name: customerName,
           customer_email: customerEmail,
           customer_phone: customerPhone
@@ -42,12 +42,12 @@ export default async function handler(req, res) {
       }
     );
 
-    console.log('Cashfree Order Response:', response.data);
-
-    if (response.data.payment_link) {
-      res.status(200).json({ paymentLink: response.data.payment_link });
+    const sessionId = response.data.payment_session_id;
+    if (sessionId) {
+      const paymentLink = `https://payments.cashfree.com/pg/session/${sessionId}`;
+      res.status(200).json({ paymentLink });
     } else {
-      res.status(500).json({ message: response.data.message || 'No payment link returned' });
+      res.status(500).json({ message: 'No payment session returned from Cashfree' });
     }
   } catch (error) {
     console.error('Create Order Error:', error.response?.data || error.message);
