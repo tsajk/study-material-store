@@ -3,14 +3,13 @@
   "builds": [
     {
       "src": "package.json",
-      "use": "@vercel/next",
-      "config": {
-        "nodeVersion": "18.x"
-      }
+      "use": "@vercel/next"
     }
   ],
-  "env": {
-    "CASHFREE_APP_ID": "605266b66d4c81295df88e013e662506",
-    "CASHFREE_SECRET_KEY": "cfsk_ma_prod_3d5c1e52a60832d47f1eb1af9045d1c2_4b948447"
-  }
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    }
+  ]
 }
