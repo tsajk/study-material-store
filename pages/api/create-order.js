@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method not allowed' });
+  }
 
   const {
     productId,
@@ -12,15 +14,23 @@ export default async function handler(req, res) {
     customerPhone
   } = req.body;
 
+  // Create a unique order ID
   const orderId = `ORDER_${Date.now()}`;
+
+  // Return URL after payment
   const returnUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success?order_id=${orderId}&product_id=${productId}`;
 
-  // Generate a valid alphanumeric customer ID (no special characters like @)
+  // Generate a safe alphanumeric customer_id
   const customerId = `cust_${customerPhone || Date.now()}`;
+
+  // Set the correct Cashfree endpoint (change to sandbox if testing)
+  const CASHFREE_BASE_URL = process.env.CASHFREE_ENV === 'sandbox'
+    ? 'https://sandbox.cashfree.com/pg/orders'
+    : 'https://api.cashfree.com/pg/orders';
 
   try {
     const response = await axios.post(
-      'https://api.cashfree.com/pg/orders',
+      CASHFREE_BASE_URL,
       {
         order_id: orderId,
         order_amount: amount,
@@ -45,9 +55,20 @@ export default async function handler(req, res) {
       }
     );
 
+    // Return the payment link to frontend
     res.status(200).json({ paymentLink: response.data.payment_link });
+
   } catch (error) {
-    console.error('Create Order Error:', error.response?.data || error.message);
-    res.status(500).json({ message: 'Failed to create payment order' });
+    // Detailed error logging for debugging
+    console.error('Create Order Error:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    });
+
+    res.status(500).json({
+      message: 'Failed to create payment order',
+      error: error.response?.data || error.message
+    });
   }
 }
