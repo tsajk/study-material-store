@@ -1,23 +1,15 @@
+// pages/api/payment-webhook.js
+import { buffer } from 'micro';
 import crypto from 'crypto';
 
 export const config = {
   api: {
-    bodyParser: false,  // disable Next.js automatic body parsing to get raw body
+    bodyParser: false, // Important to verify raw body
   },
 };
 
-// Helper function to get raw request body as string
-async function getRawBody(req) {
-  const chunks = [];
-  for await (const chunk of req) {
-    chunks.push(chunk);
-  }
-  return Buffer.concat(chunks).toString('utf8');
-}
-
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
-    // CORS preflight
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-webhook-signature');
@@ -29,12 +21,10 @@ export default async function handler(req, res) {
   }
 
   try {
+    const rawBody = await buffer(req);
     const secretKey = process.env.CASHFREE_SECRET_KEY;
     const signature = req.headers['x-webhook-signature'];
 
-    const rawBody = await getRawBody(req);
-
-    // Generate signature from raw body exactly as received
     const generatedSignature = crypto
       .createHmac('sha256', secretKey)
       .update(rawBody)
@@ -45,26 +35,25 @@ export default async function handler(req, res) {
       return res.status(401).json({ message: 'Invalid signature' });
     }
 
-    // Now safely parse JSON after verifying signature
-    const body = JSON.parse(rawBody);
+    const data = JSON.parse(rawBody.toString());
 
     const {
-      orderId,
-      txStatus,
-      orderAmount,
-      referenceId,
-      paymentMode,
-      txMsg,
-      txTime
-    } = body;
+      order_id,
+      order_amount,
+      reference_id,
+      payment_mode,
+      tx_msg,
+      tx_time,
+      tx_status
+    } = data;
 
-    console.log(`Webhook received for order ${orderId}: status=${txStatus}, amount=${orderAmount}`);
+    console.log(`Received webhook: ${order_id} - ${tx_status}`);
 
-    // TODO: update your DB or trigger post-payment processes here
+    // TODO: Update your DB or Google Sheet here
 
-    return res.status(200).json({ message: 'Webhook processed successfully' });
-  } catch (error) {
-    console.error('Webhook handler error:', error);
+    return res.status(200).json({ message: 'Webhook verified and processed' });
+  } catch (err) {
+    console.error('Webhook error:', err);
     return res.status(500).json({ message: 'Internal server error' });
   }
 }
