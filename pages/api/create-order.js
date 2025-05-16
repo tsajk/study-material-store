@@ -1,31 +1,60 @@
-const { Cashfree } = require('@cashfreepayments/cashfree-pg');
+const { Cashfree } = require('cashfree-pg');
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method Not Allowed' });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { orderId, amount, customerPhone, customerEmail } = req.body;
-
   try {
-    const cashfree = new Cashfree({
-      env: 'PROD', // or 'TEST' for sandbox
-      clientId: process.env.CF_CLIENT_ID,
-      clientSecret: process.env.CF_CLIENT_SECRET,
-    });
+    // Initialize Cashfree
+    Cashfree.XClientId = process.env.CASHFREE_APP_ID;
+    Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY;
+    Cashfree.XEnvironment = "PRODUCTION";
 
-    const order = await cashfree.orders.create({
-      orderId,
-      orderAmount: amount,
-      orderCurrency: 'INR',
-      customerDetails: {
-        customerPhone,
-        customerEmail,
+    const {
+      productId,
+      productName,
+      amount,
+      customerName,
+      customerEmail,
+      customerPhone
+    } = req.body;
+
+    // Generate order ID
+    const orderId = `ORDER_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+
+    // Create order request
+    const request = {
+      order_id: orderId,
+      order_amount: amount,
+      order_currency: "INR",
+      order_note: productName,
+      customer_details: {
+        customer_id: customerEmail,
+        customer_name: customerName,
+        customer_email: customerEmail,
+        customer_phone: customerPhone,
       },
-    });
+      order_meta: {
+        return_url: `https://${req.headers.host}/payment-success?product_id=${productId}&order_id=${orderId}`,
+      },
+    };
 
-    res.status(200).json(order);
+    // Create order
+    const response = await Cashfree.PGCreateOrder("2023-08-01", request);
+
+    if (response.data?.payment_link) {
+      return res.status(200).json({
+        paymentLink: response.data.payment_link,
+        orderId: orderId
+      });
+    }
+    throw new Error('Failed to create payment link');
   } catch (error) {
-    res.status(500).json({ error: error.message || 'Payment order creation failed' });
+    console.error('Error creating order:', error);
+    return res.status(500).json({ 
+      error: 'Failed to create payment link',
+      details: error.message 
+    });
   }
 }
