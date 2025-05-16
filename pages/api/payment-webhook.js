@@ -1,19 +1,16 @@
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
 
+  // Cashfree sends JSON body
   const event = req.body;
 
-  console.log('Received Cashfree Webhook:', event);
+  console.log('Payment webhook received:', event);
 
-  // Optional: Handle actual payment success event
-  if (event?.event === 'PAYMENT_SUCCESS') {
-    const orderId = event.data.order.order_id;
-    const paymentId = event.data.payment.payment_id;
-    const status = event.data.payment.payment_status;
+  // You can verify the event signature here (optional but recommended in production)
 
-    console.log(`Payment SUCCESS - Order ID: ${orderId}, Payment ID: ${paymentId}, Status: ${status}`);
-
-    // TODO: You could store this in Firebase, Google Sheets, etc.
+  if (event?.order?.status === 'PAID') {
+    // You can save this to DB/logs etc.
+    console.log(`Payment successful for order: ${event.order.order_id}`);
   }
 
   res.status(200).send('Webhook received');
