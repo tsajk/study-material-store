@@ -1,12 +1,16 @@
 const crypto = require('crypto');
 
 export default async function handler(req, res) {
+  if (req.method === 'OPTIONS') {
+    // Preflight response
+    return res.status(200).end();
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
   try {
-    // Verify signature
     const secretKey = process.env.CASHFREE_SECRET_KEY;
     const signature = req.headers['x-webhook-signature'];
     const generatedSignature = crypto
@@ -19,9 +23,16 @@ export default async function handler(req, res) {
       return res.status(401).json({ message: 'Invalid signature' });
     }
 
-    const { orderId, orderAmount, referenceId, txStatus, paymentMode, txMsg, txTime } = req.body;
+    const {
+      orderId,
+      orderAmount,
+      referenceId,
+      txStatus,
+      paymentMode,
+      txMsg,
+      txTime
+    } = req.body;
 
-    // Process the payment notification
     console.log(`Payment notification for order ${orderId}:`, {
       status: txStatus,
       amount: orderAmount,
@@ -31,10 +42,7 @@ export default async function handler(req, res) {
       time: txTime
     });
 
-    // Here you would typically:
-    // 1. Update your database with the payment status
-    // 2. Send confirmation email to customer
-    // 3. Trigger any post-payment actions
+    // You can now update DB, send email, etc.
 
     return res.status(200).json({ message: 'Webhook received successfully' });
   } catch (error) {
