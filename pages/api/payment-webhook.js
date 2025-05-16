@@ -1,4 +1,4 @@
-const { Cashfree } = require('cashfree-pg');
+const cashfree = require("@cashfree/pg");
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -6,18 +6,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Initialize Cashfree
-    Cashfree.XClientId = process.env.CASHFREE_APP_ID;
-    Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY;
-    Cashfree.XEnvironment = "PRODUCTION";
+    cashfree.XClientId = process.env.CASHFREE_APP_ID;
+    cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY;
+    cashfree.XEnvironment = cashfree.Environment.PRODUCTION;
 
     const { orderId, orderStatus } = req.body;
-
     if (orderStatus === 'PAID') {
       console.log(`Payment successful for order ${orderId}`);
-      // Handle successful payment
     }
-
     return res.status(200).json({ status: 'OK' });
   } catch (error) {
     console.error('Error processing webhook:', error);
