@@ -1,7 +1,22 @@
+export const config = {
+  api: {
+    bodyParser: false, // disable body parsing so we can manually parse raw body
+  },
+};
+
+import { IncomingMessage } from 'http';
+
+function buffer(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on('data', (chunk) => chunks.push(chunk));
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
+}
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
-    // Handle CORS preflight
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-webhook-signature');
@@ -13,10 +28,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Log webhook payload for debugging
-    console.log('Webhook payload received:', req.body);
+    const rawBody = await buffer(req);
+    const body = JSON.parse(rawBody.toString());
 
-    // Extract important data
+    console.log('Webhook payload received:', body);
+
     const {
       orderId,
       txStatus,
@@ -25,14 +41,12 @@ export default async function handler(req, res) {
       paymentMode,
       txMsg,
       txTime
-    } = req.body;
+    } = body;
 
     console.log(`Webhook for order ${orderId}:`);
     console.log(`Status: ${txStatus}, Amount: ${orderAmount}`);
     console.log(`Payment Mode: ${paymentMode}, Reference ID: ${referenceId}`);
     console.log(`Message: ${txMsg}, Time: ${txTime}`);
-
-    // TODO: Update your database or send notification here
 
     return res.status(200).json({ message: 'Webhook received without signature validation' });
   } catch (error) {
