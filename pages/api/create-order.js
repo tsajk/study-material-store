@@ -1,4 +1,4 @@
-const { Cashfree } = require('cashfree-node-sdk');
+const { Cashfree } = require('cashfree-pg');
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -6,10 +6,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Initialize Cashfree
     const cashfree = new Cashfree({
       env: 'PRODUCTION',
-      apiVersion: '2023-08-01',
       clientId: process.env.CASHFREE_APP_ID,
       clientSecret: process.env.CASHFREE_SECRET_KEY
     });
@@ -23,10 +21,8 @@ export default async function handler(req, res) {
       customerPhone
     } = req.body;
 
-    // Generate order ID
     const orderId = `ORDER_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
-    // Create order request
     const orderRequest = {
       order_amount: amount,
       order_currency: "INR",
@@ -42,7 +38,6 @@ export default async function handler(req, res) {
       },
     };
 
-    // Create order
     const response = await cashfree.PGCreateOrder(orderId, orderRequest);
 
     if (response.data && response.data.payment_link) {
@@ -55,9 +50,9 @@ export default async function handler(req, res) {
     }
   } catch (error) {
     console.error('Error creating order:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'Failed to create payment link',
-      details: error.message 
+      details: error.message
     });
   }
 }
