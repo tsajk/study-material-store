@@ -1,10 +1,4 @@
-import crypto from 'crypto';
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     // Handle CORS preflight
