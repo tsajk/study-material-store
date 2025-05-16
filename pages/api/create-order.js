@@ -29,11 +29,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Generate a unique order ID
+    // Unique order ID generation
     const orderId = `order_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     const currency = 'INR';
 
-    // Prepare request payload for Cashfree
+    // Prepare request payload
     const requestData = {
       order_id: orderId,
       order_amount: Number(amount),
@@ -50,7 +50,7 @@ export default async function handler(req, res) {
       }
     };
 
-    // Call Cashfree order API
+    // Call Cashfree API to create order
     const response = await axios.post('https://api.cashfree.com/pg/orders', requestData, {
       headers: {
         'Content-Type': 'application/json',
@@ -60,11 +60,12 @@ export default async function handler(req, res) {
       }
     });
 
-    // Return payment link to frontend
-    if (response.data && response.data.payments && response.data.payments.url) {
+    // Check and return the correct payment link (hosted payment page)
+    if (response.data && response.data.payment_session_id) {
+      const paymentLink = `https://www.cashfree.com/checkout/post/pg?session_id=${response.data.payment_session_id}`;
       return res.status(200).json({
         orderId,
-        paymentLink: response.data.payments.url
+        paymentLink
       });
     } else {
       console.error('Unexpected Cashfree response:', response.data);
