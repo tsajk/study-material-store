@@ -1,4 +1,4 @@
-const { Cashfree } = require('cashfree-node-sdk');
+const { Cashfree } = require('cashfree-pg');
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -6,7 +6,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Verify signature (important for security)
     const cashfree = new Cashfree({
       env: 'PRODUCTION',
       clientId: process.env.CASHFREE_APP_ID,
@@ -17,7 +16,7 @@ export default async function handler(req, res) {
 
     if (orderStatus === 'PAID') {
       console.log(`Payment successful for order ${orderId}`);
-      // Handle successful payment
+      // Handle payment logic here (e.g., update DB, send email, etc.)
     }
 
     return res.status(200).json({ status: 'OK' });
