@@ -15,6 +15,9 @@ export default async function handler(req, res) {
   const orderId = `ORDER_${Date.now()}`;
   const returnUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success?order_id=${orderId}&product_id=${productId}`;
 
+  // Generate a valid alphanumeric customer ID (no special characters like @)
+  const customerId = `cust_${customerPhone || Date.now()}`;
+
   try {
     const response = await axios.post(
       'https://api.cashfree.com/pg/orders',
@@ -23,7 +26,7 @@ export default async function handler(req, res) {
         order_amount: amount,
         order_currency: 'INR',
         customer_details: {
-          customer_id: customerEmail,
+          customer_id: customerId,
           customer_name: customerName,
           customer_email: customerEmail,
           customer_phone: customerPhone
