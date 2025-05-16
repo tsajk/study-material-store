@@ -1,49 +1,43 @@
-const { Cashfree } = require('@cashfree/cashfree-pg');
+const crypto = require('crypto');
+const axios = require('axios');
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ message: 'Method not allowed' });
+  }
+
+  const { productId, productName, amount, customerName, customerEmail, customerPhone } = req.body;
+
+  // Validate input
+  if (!productId || !productName || !amount || !customerName || !customerEmail || !customerPhone) {
+    return res.status(400).json({ message: 'Missing required fields' });
   }
 
   try {
-    // Initialize Cashfree
-    Cashfree.XClientId = process.env.CASHFREE_APP_ID;
-    Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY;
-    Cashfree.XEnvironment = Cashfree.Environment.PRODUCTION;
-
-    const { productId, productName, amount, customerName, customerEmail, customerPhone } = req.body;
-    const orderId = `ORDER_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-
-    const request = {
+    const orderId = `order_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const currency = 'INR';
+    
+    // Prepare request data for Cashfree
+    const requestData = {
       order_id: orderId,
       order_amount: amount,
-      order_currency: "INR",
+      order_currency: currency,
       order_note: productName,
       customer_details: {
         customer_id: customerEmail,
         customer_name: customerName,
         customer_email: customerEmail,
-        customer_phone: customerPhone,
+        customer_phone: customerPhone
       },
       order_meta: {
-        return_url: `https://${req.headers.host}/payment-success?product_id=${productId}&order_id=${orderId}`,
-      },
+        return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success?order_id=${orderId}&product_id=${productId}`
+      }
     };
 
-    const response = await Cashfree.PGCreateOrder("2023-08-01", request);
+    // Generate signature
+    const secretKey = process.env.CASHFREE_SECRET_KEY;
+    const message = `${requestData.order_id}|${requestData.order_amount}|${requestData.order_currency}`;
+    const signature = crypto.createHmac('sha256', secretKey).update(message).digest('hex');
 
-    if (response.data?.payment_link) {
-      return res.status(200).json({
-        paymentLink: response.data.payment_link,
-        orderId: orderId
-      });
-    }
-    throw new Error('Failed to create payment link');
-  } catch (error) {
-    console.error('Error creating order:', error);
-    return res.status(500).json({ 
-      error: 'Failed to create payment link',
-      details: error.message 
-    });
-  }
-}
+    // Make API call to Cashfree
+    const response = await axios.post('https://api.cashfree.com/pg/orders', request
