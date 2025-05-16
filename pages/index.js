@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import Head from 'next/head';
-import axios from 'axios';
+import { useState } from 'react'
+import Head from 'next/head'
+import axios from 'axios'
 
 const products = [
   {
@@ -24,27 +24,26 @@ const products = [
     description: 'Complete physics material for JEE Mains',
     telegramLink: 'https://t.me/Material_eduhubkmrbot?start=disha-144-jee-mains-physics'
   }
-];
+]
 
 export default function Home() {
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [customerName, setCustomerName] = useState('');
-  const [customerEmail, setCustomerEmail] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [paymentLink, setPaymentLink] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState(null)
+  const [customerName, setCustomerName] = useState('')
+  const [customerEmail, setCustomerEmail] = useState('')
+  const [customerPhone, setCustomerPhone] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleBuyNow = async (product) => {
-    setSelectedProduct(product);
-  };
+    setSelectedProduct(product)
+  }
 
   const initiatePayment = async () => {
     if (!customerName || !customerEmail || !customerPhone) {
-      alert('Please fill all customer details');
-      return;
+      alert('Please fill all customer details')
+      return
     }
 
-    setIsLoading(true);
+    setIsLoading(true)
     try {
       const response = await axios.post('/api/create-order', {
         productId: selectedProduct.id,
@@ -53,18 +52,18 @@ export default function Home() {
         customerName,
         customerEmail,
         customerPhone
-      });
+      })
 
       if (response.data.paymentLink) {
-        window.location.href = response.data.paymentLink;
+        window.location.href = response.data.paymentLink
       }
     } catch (error) {
-      console.error('Payment initiation failed:', error);
-      alert('Payment initiation failed. Please try again.');
+      console.error('Payment initiation failed:', error)
+      alert('Payment initiation failed. Please try again.')
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -153,5 +152,5 @@ export default function Home() {
         )}
       </main>
     </div>
-  );
+  )
 }
