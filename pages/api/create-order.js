@@ -1,4 +1,4 @@
-const { Cashfree } = require('@cashfreepayments/cashfree-pg');
+const { Cashfree } = require('cashfree-pg-node-sdk');
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
