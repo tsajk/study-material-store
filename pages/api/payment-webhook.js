@@ -1,8 +1,23 @@
-const crypto = require('crypto');
+import crypto from 'crypto';
+
+export const config = {
+  api: {
+    bodyParser: false,  // disable Next.js automatic body parsing to get raw body
+  },
+};
+
+// Helper function to get raw request body as string
+async function getRawBody(req) {
+  const chunks = [];
+  for await (const chunk of req) {
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks).toString('utf8');
+}
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
-    // Handle preflight CORS request
+    // CORS preflight
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-webhook-signature');
@@ -17,14 +32,12 @@ export default async function handler(req, res) {
     const secretKey = process.env.CASHFREE_SECRET_KEY;
     const signature = req.headers['x-webhook-signature'];
 
-    // Get raw body string (important for signature verification)
-    // Note: Next.js parses JSON automatically, so you might need to capture raw body differently in real setup.
-    const bodyString = JSON.stringify(req.body);
+    const rawBody = await getRawBody(req);
 
-    // Generate HMAC SHA256 signature and compare
+    // Generate signature from raw body exactly as received
     const generatedSignature = crypto
       .createHmac('sha256', secretKey)
-      .update(bodyString)
+      .update(rawBody)
       .digest('base64');
 
     if (signature !== generatedSignature) {
@@ -32,7 +45,9 @@ export default async function handler(req, res) {
       return res.status(401).json({ message: 'Invalid signature' });
     }
 
-    // Extract data from webhook
+    // Now safely parse JSON after verifying signature
+    const body = JSON.parse(rawBody);
+
     const {
       orderId,
       txStatus,
@@ -41,11 +56,11 @@ export default async function handler(req, res) {
       paymentMode,
       txMsg,
       txTime
-    } = req.body;
+    } = body;
 
     console.log(`Webhook received for order ${orderId}: status=${txStatus}, amount=${orderAmount}`);
 
-    // TODO: Update your order/payment status in DB here
+    // TODO: update your DB or trigger post-payment processes here
 
     return res.status(200).json({ message: 'Webhook processed successfully' });
   } catch (error) {
