@@ -23,11 +23,11 @@ export default async function handler(req, res) {
         order_amount: amount,
         order_currency: 'INR',
         customer_details: {
-          customer_id: customerEmail,
-          customer_name: customerName,
-          customer_email: customerEmail,
-          customer_phone: customerPhone
-        },
+  customer_id: customerEmail.replace(/[^a-zA-Z0-9_-]/g, '_'), // fix invalid ID
+  customer_name: customerName,
+  customer_email: customerEmail,
+  customer_phone: customerPhone
+},
         order_meta: {
           return_url: returnUrl
         }
