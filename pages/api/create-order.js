@@ -23,11 +23,11 @@ export default async function handler(req, res) {
         order_amount: amount,
         order_currency: 'INR',
         customer_details: {
-  customer_id: customerEmail.replace(/[^a-zA-Z0-9_-]/g, '_'), // fix invalid ID
-  customer_name: customerName,
-  customer_email: customerEmail,
-  customer_phone: customerPhone
-},
+          customer_id: customerEmail.replace(/[^a-zA-Z0-9_-]/g, '_'), // Make it alphanumeric
+          customer_name: customerName,
+          customer_email: customerEmail,
+          customer_phone: customerPhone
+        },
         order_meta: {
           return_url: returnUrl
         }
@@ -42,9 +42,15 @@ export default async function handler(req, res) {
       }
     );
 
-    res.status(200).json({ paymentLink: response.data.payment_link });
+    console.log('Cashfree Order Response:', response.data);
+
+    if (response.data.payment_link) {
+      res.status(200).json({ paymentLink: response.data.payment_link });
+    } else {
+      res.status(500).json({ message: response.data.message || 'No payment link returned' });
+    }
   } catch (error) {
     console.error('Create Order Error:', error.response?.data || error.message);
-    res.status(500).json({ message: 'Failed to create payment order' });
+    res.status(500).json({ message: error.response?.data?.message || 'Payment initiation failed' });
   }
 }
