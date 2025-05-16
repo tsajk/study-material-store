@@ -40,4 +40,27 @@ export default async function handler(req, res) {
     const signature = crypto.createHmac('sha256', secretKey).update(message).digest('hex');
 
     // Make API call to Cashfree
-    const response = await axios.post('https://api.cashfree.com/pg/orders', request
+    const response = await axios.post('https://api.cashfree.com/pg/orders', requestData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-client-id': process.env.CASHFREE_APP_ID,
+        'x-client-secret': secretKey,
+        'x-api-version': '2022-09-01'
+      }
+    });
+
+    if (response.data && response.data.payment_link) {
+      return res.status(200).json({
+        orderId: orderId,
+        paymentLink: response.data.payment_link
+      });
+    } else {
+      return res.status(500).json({ message: 'Failed to create payment link' });
+    }
+  } catch (error) {
+    console.error('Error creating order:', error.response?.data || error.message);
+    return res.status(500).json({ 
+      message: error.response?.data?.message || 'Payment initiation failed' 
+    });
+  }
+}
