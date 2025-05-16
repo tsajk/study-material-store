@@ -5,42 +5,24 @@ export const config = {
     bodyParser: false,
   },
 };
-
 export default async function handler(req, res) {
+  if (req.method === 'OPTIONS') {
+    // Handle CORS preflight
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-webhook-signature');
+    return res.status(200).end();
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
   try {
-    const secretKey = process.env.CASHFREE_SECRET_KEY;
-    const signature = req.headers['x-webhook-signature'];
+    // Log webhook payload for debugging
+    console.log('Webhook payload received:', req.body);
 
-    const chunks = [];
-    for await (const chunk of req) {
-      chunks.push(chunk);
-    }
-    const bodyBuffer = Buffer.concat(chunks);
-    const bodyString = bodyBuffer.toString('utf8');
-    const parsedBody = JSON.parse(bodyString);
-
-    const generatedSignature = crypto
-      .createHmac('sha256', secretKey)
-      .update(bodyString)
-      .digest('base64');
-
-    if (req.headers['x-webhook-test']) {
-  console.log('Test webhook received, skipping signature validation');
-} else {
-  const generatedSignature = crypto
-    .createHmac('sha256', secretKey)
-    .update(bodyString)
-    .digest('base64');
-
-  if (signature !== generatedSignature) {
-    console.error('Invalid webhook signature');
-    return res.status(401).json({ message: 'Invalid signature' });
-  }
-}
+    // Extract important data
     const {
       orderId,
       txStatus,
@@ -49,15 +31,18 @@ export default async function handler(req, res) {
       paymentMode,
       txMsg,
       txTime
-    } = parsedBody;
+    } = req.body;
 
-    console.log(`Webhook received: orderId=${orderId}, status=${txStatus}`);
+    console.log(`Webhook for order ${orderId}:`);
+    console.log(`Status: ${txStatus}, Amount: ${orderAmount}`);
+    console.log(`Payment Mode: ${paymentMode}, Reference ID: ${referenceId}`);
+    console.log(`Message: ${txMsg}, Time: ${txTime}`);
 
-    // TODO: Save to DB
+    // TODO: Update your database or send notification here
 
-    return res.status(200).json({ message: 'Webhook verified and processed' });
-  } catch (err) {
-    console.error('Webhook handler error:', err);
-    return res.status(500).json({ message: 'Internal Server Error' });
+    return res.status(200).json({ message: 'Webhook received without signature validation' });
+  } catch (error) {
+    console.error('Webhook handler error:', error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 }
